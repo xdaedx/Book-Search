@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
+import { useMutation } from '@apollo/react-hooks'
 
-import { createUser } from '../utils/API';
+import { ADD_USER } from './../utils/mutations';
 import Auth from '../utils/auth';
 
 const SignupForm = () => {
@@ -12,6 +13,8 @@ const SignupForm = () => {
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
+  const [addUser] = useMutation(ADD_USER);
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setUserFormData({ ...userFormData, [name]: value });
@@ -19,7 +22,6 @@ const SignupForm = () => {
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
     // check if form has everything (as per react-bootstrap docs)
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
@@ -28,15 +30,10 @@ const SignupForm = () => {
     }
 
     try {
-      const response = await createUser(userFormData);
-
-      if (!response.ok) {
-        throw new Error('something went wrong!');
-      }
-
-      const { token, user } = await response.json();
-      console.log(user);
-      Auth.login(token);
+    const { data } = await addUser({
+      variables: { ...userFormData }
+    });
+    Auth.login(data.addUser.token);
     } catch (err) {
       console.error(err);
       setShowAlert(true);
@@ -70,6 +67,7 @@ const SignupForm = () => {
           />
           <Form.Control.Feedback type='invalid'>Username is required!</Form.Control.Feedback>
         </Form.Group>
+        
 
         <Form.Group>
           <Form.Label htmlFor='email'>Email</Form.Label>
@@ -83,6 +81,7 @@ const SignupForm = () => {
           />
           <Form.Control.Feedback type='invalid'>Email is required!</Form.Control.Feedback>
         </Form.Group>
+        
 
         <Form.Group>
           <Form.Label htmlFor='password'>Password</Form.Label>
